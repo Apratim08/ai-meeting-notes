@@ -1,0 +1,432 @@
+/* AI Meeting Notes - Web Interface Styles */
+
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #64748b;
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --danger-color: #dc2626;
+    --background-color: #f8fafc;
+    --surface-color: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.idle {
+    background-color: var(--secondary-color);
+}
+
+.status-dot.recording {
+    background-color: var(--danger-color);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.processing {
+    background-color: var(--warning-color);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.completed {
+    background-color: var(--success-color);
+}
+
+.status-dot.error {
+    background-color: var(--danger-color);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Control Panel */
+.control-panel {
+    background: var(--surface-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.recording-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.recording-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.duration-display {
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-family: 'SF Mono', Monaco, monospace;
+    color: var(--text-primary);
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background-color: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 40px;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #475569;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #b91c1c;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Setup Section */
+.setup-section {
+    background: var(--surface-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--warning-color);
+    border-left: 4px solid var(--warning-color);
+}
+
+.setup-section h2 {
+    color: var(--warning-color);
+    margin-bottom: 20px;
+}
+
+.setup-instructions h3 {
+    margin: 20px 0 10px 0;
+    color: var(--text-primary);
+}
+
+.setup-instructions ol {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.setup-instructions li {
+    margin-bottom: 8px;
+}
+
+.setup-instructions a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.setup-instructions a:hover {
+    text-decoration: underline;
+}
+
+/* Results Section */
+.results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.result-panel {
+    background: var(--surface-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: #f8fafc;
+}
+
+.panel-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.content-area {
+    padding: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+/* Notes Formatting */
+.notes-content h3 {
+    color: var(--primary-color);
+    margin: 20px 0 10px 0;
+    font-size: 1.1rem;
+}
+
+.notes-content h4 {
+    color: var(--text-primary);
+    margin: 15px 0 8px 0;
+    font-size: 1rem;
+}
+
+.notes-content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.notes-content li {
+    margin-bottom: 5px;
+}
+
+/* Error Section */
+.error-section {
+    background: var(--surface-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--danger-color);
+    border-left: 4px solid var(--danger-color);
+}
+
+.error-content h3 {
+    color: var(--danger-color);
+    margin-bottom: 10px;
+}
+
+.error-content p {
+    margin-bottom: 15px;
+    color: var(--text-secondary);
+}
+
+/* Footer */
+footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.system-status {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: var(--surface-color);
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--success-color);
+    max-width: 400px;
+    animation: slideIn 0.3s ease;
+}
+
+.toast.error {
+    border-left-color: var(--danger-color);
+}
+
+.toast.warning {
+    border-left-color: var(--warning-color);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .recording-controls {
+        justify-content: center;
+    }
+    
+    .recording-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .progress-container {
+        width: 100%;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .content-area {
+        padding: 16px;
+    }
+}

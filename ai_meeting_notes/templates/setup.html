@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Wizard - AI Meeting Notes</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .setup-wizard {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .wizard-step {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .wizard-step.completed {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .wizard-step.failed {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .wizard-step.warning {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .step-number.completed {
+            background: #28a745;
+        }
+        
+        .step-number.failed {
+            background: #dc3545;
+        }
+        
+        .step-number.warning {
+            background: #ffc107;
+        }
+        
+        .step-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .step-description {
+            color: #6c757d;
+            margin: 5px 0 0 0;
+        }
+        
+        .step-content {
+            margin-left: 45px;
+        }
+        
+        .step-instructions {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .step-actions {
+            margin-top: 15px;
+        }
+        
+        .validation-result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .validation-result.pass {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .validation-result.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .validation-result.fail {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .overall-status {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .overall-status.pass {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .overall-status.warning {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .overall-status.fail {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .next-steps {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .system-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Meeting Notes - Setup Wizard</h1>
+            <nav>
+                <a href="/" class="btn btn-secondary">← Back to Main App</a>
+                <button id="refresh-validation-btn" class="btn btn-primary">Refresh Validation</button>
+            </nav>
+        </header>
+
+        <main class="setup-wizard">
+            <div id="loading-section" class="loading">
+                <div class="spinner"></div>
+                <p>Running setup validation...</p>
+            </div>
+
+            <div id="validation-results" style="display: none;">
+                <div id="overall-status" class="overall-status">
+                    <h2 id="overall-status-title">Setup Status</h2>
+                    <p id="overall-status-message"></p>
+                </div>
+
+                <div id="wizard-steps"></div>
+
+                <div id="next-steps" class="next-steps" style="display: none;">
+                    <h3>Next Steps</h3>
+                    <ul id="next-steps-list"></ul>
+                </div>
+
+                <div class="system-info">
+                    <h4>System Information</h4>
+                    <button id="show-system-info-btn" class="btn btn-small">Show System Info</button>
+                    <div id="system-info-content" style="display: none;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class SetupWizard {
+            constructor() {
+                this.validationResults = null;
+                this.wizardSteps = null;
+                this.systemInfo = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                await this.runValidation();
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                document.getElementById('refresh-validation-btn').addEventListener('click', () => {
+                    this.runValidation();
+                });
+                
+                document.getElementById('show-system-info-btn').addEventListener('click', () => {
+                    this.toggleSystemInfo();
+                });
+            }
+            
+            async runValidation() {
+                this.showLoading();
+                
+                try {
+                    // Run validation and get wizard steps in parallel
+                    const [validationResponse, wizardResponse, systemInfoResponse] = await Promise.all([
+                        fetch('/api/setup/validate'),
+                        fetch('/api/setup/wizard'),
+                        fetch('/api/setup/system-info')
+                    ]);
+                    
+                    this.validationResults = await validationResponse.json();
+                    this.wizardSteps = await wizardResponse.json();
+                    this.systemInfo = await systemInfoResponse.json();
+                    
+                    this.renderResults();
+                    
+                } catch (error) {
+                    console.error('Error running validation:', error);
+                    this.showError('Failed to run setup validation. Please check the console for details.');
+                }
+            }
+            
+            showLoading() {
+                document.getElementById('loading-section').style.display = 'block';
+                document.getElementById('validation-results').style.display = 'none';
+            }
+            
+            hideLoading() {
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('validation-results').style.display = 'block';
+            }
+            
+            renderResults() {
+                this.hideLoading();
+                this.renderOverallStatus();
+                this.renderWizardSteps();
+                this.renderNextSteps();
+            }
+            
+            renderOverallStatus() {
+                const statusElement = document.getElementById('overall-status');
+                const titleElement = document.getElementById('overall-status-title');
+                const messageElement = document.getElementById('overall-status-message');
+                
+                statusElement.className = `overall-status ${this.validationResults.overall_status}`;
+                
+                const statusMessages = {
+                    'pass': 'Setup Complete! ✅',
+                    'warning': 'Setup Mostly Complete ⚠️',
+                    'fail': 'Setup Required ❌'
+                };
+                
+                titleElement.textContent = statusMessages[this.validationResults.overall_status] || 'Unknown Status';
+                
+                if (this.validationResults.setup_complete) {
+                    messageElement.textContent = 'All critical components are properly configured. You can start using AI Meeting Notes!';
+                } else {
+                    messageElement.textContent = 'Some setup steps are required before you can use AI Meeting Notes.';
+                }
+            }
+            
+            renderWizardSteps() {
+                const stepsContainer = document.getElementById('wizard-steps');
+                stepsContainer.innerHTML = '';
+                
+                this.wizardSteps.steps.forEach((step, index) => {
+                    const stepElement = this.createStepElement(step, index);
+                    stepsContainer.appendChild(stepElement);
+                });
+            }
+            
+            createStepElement(step, index) {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'wizard-step';
+                
+                // Find validation result for this step
+                const validationResult = this.findValidationResult(step.validation_method);
+                const status = validationResult ? validationResult.status : 'unknown';
+                
+                stepDiv.classList.add(status === 'pass' ? 'completed' : status === 'warning' ? 'warning' : 'failed');
+                
+                stepDiv.innerHTML = `
+                    <div class="step-header">
+                        <div class="step-number ${status === 'pass' ? 'completed' : status === 'warning' ? 'warning' : 'failed'}">
+                            ${status === 'pass' ? '✓' : step.step}
+                        </div>
+                        <div>
+                            <h3 class="step-title">${step.title}</h3>
+                            <p class="step-description">${step.description}</p>
+                        </div>
+                    </div>
+                    <div class="step-content">
+                        ${validationResult ? this.renderValidationResult(validationResult) : ''}
+                        ${status !== 'pass' ? `
+                            <div class="step-instructions">${step.instructions}</div>
+                            <div class="step-actions">
+                                <button class="btn btn-primary validate-step-btn" data-method="${step.validation_method}">
+                                    Validate This Step
+                                </button>
+                                ${this.getStepSpecificActions(step)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Add event listeners for step-specific actions
+                const validateBtn = stepDiv.querySelector('.validate-step-btn');
+                if (validateBtn) {
+                    validateBtn.addEventListener('click', () => {
+                        this.validateSingleStep(step.validation_method);
+                    });
+                }
+                
+                return stepDiv;
+            }
+            
+            renderValidationResult(result) {
+                return `
+                    <div class="validation-result ${result.status}">
+                        <strong>${result.message}</strong>
+                        ${result.details ? `<br><small>${result.details}</small>` : ''}
+                        ${result.fix_instructions ? `<br><em>Fix: ${result.fix_instructions}</em>` : ''}
+                    </div>
+                `;
+            }
+            
+            findValidationResult(validationMethod) {
+                const methodMap = {
+                    'blackhole_installation': 'blackhole_installation',
+                    'multi_output_device': 'multi_output_device',
+                    'audio_permissions': 'audio_permissions',
+                    'ollama_installation': 'ollama_installation',
+                    'ollama_model': 'ollama_model',
+                    'full_validation': 'overall'
+                };
+                
+                const resultName = methodMap[validationMethod];
+                return this.validationResults.results.find(r => r.name === resultName);
+            }
+            
+            getStepSpecificActions(step) {
+                const actions = {
+                    'blackhole_installation': `
+                        <a href="https://github.com/ExistentialAudio/BlackHole" target="_blank" class="btn btn-secondary">
+                            Download BlackHole
+                        </a>
+                    `,
+                    'ollama_installation': `
+                        <a href="https://ollama.ai" target="_blank" class="btn btn-secondary">
+                            Download Ollama
+                        </a>
+                    `,
+                    'ollama_model': `
+                        <button class="btn btn-secondary" onclick="this.copyToClipboard('ollama pull llama3.1:8b')">
+                            Copy Download Command
+                        </button>
+                    `
+                };
+                
+                return actions[step.validation_method] || '';
+            }
+            
+            async validateSingleStep(method) {
+                try {
+                    let endpoint;
+                    switch (method) {
+                        case 'blackhole_installation':
+                        case 'multi_output_device':
+                        case 'audio_permissions':
+                            endpoint = '/api/setup/validate/audio';
+                            break;
+                        case 'ollama_installation':
+                        case 'ollama_model':
+                            endpoint = '/api/setup/validate/llm';
+                            break;
+                        default:
+                            endpoint = '/api/setup/validate';
+                    }
+                    
+                    const response = await fetch(endpoint);
+                    const results = await response.json();
+                    
+                    // Update validation results and re-render
+                    this.validationResults = results;
+                    this.renderResults();
+                    
+                } catch (error) {
+                    console.error('Error validating step:', error);
+                    alert('Failed to validate step. Please try again.');
+                }
+            }
+            
+            renderNextSteps() {
+                const nextStepsContainer = document.getElementById('next-steps');
+                const nextStepsList = document.getElementById('next-steps-list');
+                
+                if (this.validationResults.next_steps && this.validationResults.next_steps.length > 0) {
+                    nextStepsContainer.style.display = 'block';
+                    nextStepsList.innerHTML = '';
+                    
+                    this.validationResults.next_steps.forEach(step => {
+                        const li = document.createElement('li');
+                        li.textContent = step;
+                        nextStepsList.appendChild(li);
+                    });
+                } else {
+                    nextStepsContainer.style.display = 'none';
+                }
+            }
+            
+            async toggleSystemInfo() {
+                const content = document.getElementById('system-info-content');
+                const button = document.getElementById('show-system-info-btn');
+                
+                if (content.style.display === 'none') {
+                    content.innerHTML = `<pre>${JSON.stringify(this.systemInfo.system_info, null, 2)}</pre>`;
+                    content.style.display = 'block';
+                    button.textContent = 'Hide System Info';
+                } else {
+                    content.style.display = 'none';
+                    button.textContent = 'Show System Info';
+                }
+            }
+            
+            copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                });
+            }
+            
+            showError(message) {
+                this.hideLoading();
+                document.getElementById('validation-results').innerHTML = `
+                    <div class="overall-status fail">
+                        <h2>Error</h2>
+                        <p>${message}</p>
+                    </div>
+                `;
+                document.getElementById('validation-results').style.display = 'block';
+            }
+        }
+        
+        // Initialize the setup wizard when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SetupWizard();
+        });
+    </script>
+</body>
+</html>

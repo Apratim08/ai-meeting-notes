@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Meeting Notes</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Meeting Notes</h1>
+            <div class="header-controls">
+                <div class="status-indicator">
+                    <span id="status-dot" class="status-dot idle"></span>
+                    <span id="status-text">Ready</span>
+                </div>
+                <nav>
+                    <a href="/setup" class="btn btn-secondary">Setup Wizard</a>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            <!-- Control Panel -->
+            <section class="control-panel">
+                <div class="recording-controls">
+                    <button id="start-btn" class="btn btn-primary">Start Recording</button>
+                    <button id="stop-btn" class="btn btn-secondary" disabled>Stop Recording</button>
+                    <button id="clear-btn" class="btn btn-danger">Clear Session</button>
+                </div>
+                
+                <div class="recording-info">
+                    <div id="recording-duration" class="duration-display">00:00</div>
+                    <div id="progress-container" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <span id="progress-text" class="progress-text">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Setup Instructions -->
+            <section id="setup-section" class="setup-section" style="display: none;">
+                <h2>Audio Setup Required</h2>
+                <div class="setup-instructions">
+                    <h3>Step 1: Install BlackHole</h3>
+                    <p>Download and install BlackHole from <a href="https://existential.audio/blackhole/" target="_blank">existential.audio/blackhole</a></p>
+                    
+                    <h3>Step 2: Create Multi-Output Device</h3>
+                    <ol>
+                        <li>Open <strong>Audio MIDI Setup</strong> (Applications → Utilities)</li>
+                        <li>Click the <strong>+</strong> button and select <strong>Create Multi-Output Device</strong></li>
+                        <li>Check both your speakers/headphones AND <strong>BlackHole 2ch</strong></li>
+                        <li>Set the Multi-Output Device as your system output during meetings</li>
+                    </ol>
+                    
+                    <h3>Step 3: Test Setup</h3>
+                    <p>Play some audio and verify you can hear it normally. The app will capture the same audio through BlackHole.</p>
+                    
+                    <button id="test-setup-btn" class="btn btn-primary">Test Audio Setup</button>
+                </div>
+            </section>
+
+            <!-- Results Display -->
+            <section class="results-section">
+                <!-- Transcript Display -->
+                <div id="transcript-section" class="result-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h2>Transcript</h2>
+                        <button id="copy-transcript-btn" class="btn btn-small">Copy</button>
+                    </div>
+                    <div id="transcript-content" class="content-area"></div>
+                </div>
+
+                <!-- Notes Display -->
+                <div id="notes-section" class="result-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h2>Meeting Notes</h2>
+                        <button id="copy-notes-btn" class="btn btn-small">Copy</button>
+                    </div>
+                    <div id="notes-content" class="content-area"></div>
+                </div>
+            </section>
+
+            <!-- Error Display -->
+            <div id="error-section" class="error-section" style="display: none;">
+                <div class="error-content">
+                    <h3>Error</h3>
+                    <p id="error-message"></p>
+                    <button id="retry-btn" class="btn btn-primary" style="display: none;">Retry</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="system-status">
+                <span id="health-status">Checking system...</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
