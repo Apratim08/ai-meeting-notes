@@ -14,7 +14,7 @@ class AudioConfig(BaseModel):
     device_id: Optional[int] = Field(default=None, description="Audio device ID (auto-detect if None)")
     blackhole_device_name: str = Field(default="BlackHole 2ch", description="BlackHole device name to detect")
     max_recording_hours: float = Field(default=4.0, description="Maximum recording duration in hours")
-    enable_microphone: bool = Field(default=False, description="Enable microphone input for capturing your voice")
+    enable_microphone: bool = Field(default=True, description="Enable microphone input for capturing your voice")
     microphone_device_name: Optional[str] = Field(default=None, description="Specific microphone device name (auto-detect if None)")
     mic_gain: float = Field(default=0.5, description="Microphone audio gain multiplier (0.0-2.0)")
 

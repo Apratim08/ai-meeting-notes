@@ -219,18 +219,8 @@ class AudioRecorder:
             blackhole_mono = indata[:, 0]
 
         with self._mix_lock:
+            # Store BlackHole data only - mixing happens in mic callback
             self._latest_blackhole = blackhole_mono.copy()
-
-            # Mix with latest mic data if available
-            if self._latest_mic is not None:
-                # Apply mic gain from config
-                mic_adjusted = self._latest_mic * self.config.mic_gain
-                # Mix: average both sources
-                mixed = (blackhole_mono + mic_adjusted) / 2.0
-                self.current_session.add_audio_chunk(mixed)
-            else:
-                # No mic data yet, use BlackHole only
-                self.current_session.add_audio_chunk(blackhole_mono)
 
     def _mic_callback(self, indata: np.ndarray, frames: int, time_info, status) -> None:
         """Callback for microphone stream in dual-stream mode."""
@@ -247,18 +237,17 @@ class AudioRecorder:
             mic_mono = indata[:, 0]
 
         with self._mix_lock:
-            self._latest_mic = mic_mono.copy()
+            # Apply mic gain
+            mic_adjusted = mic_mono * self.config.mic_gain
 
             # Mix with latest BlackHole data if available
             if self._latest_blackhole is not None:
-                # Apply mic gain from config
-                mic_adjusted = mic_mono * self.config.mic_gain
-                # Mix: average both sources
-                mixed = (self._latest_blackhole + mic_adjusted) / 2.0
+                # Ensure same length by taking minimum
+                min_len = min(len(self._latest_blackhole), len(mic_adjusted))
+                mixed = (self._latest_blackhole[:min_len] + mic_adjusted[:min_len]) / 2.0
                 self.current_session.add_audio_chunk(mixed)
             else:
                 # No BlackHole data yet, use mic only
-                mic_adjusted = mic_mono * self.config.mic_gain
                 self.current_session.add_audio_chunk(mic_adjusted)
     
     def start_recording(self, filename: str) -> None:

@@ -159,10 +159,17 @@ class NotesGenerator:
     def _create_prompt(self, transcript: str, meeting_duration: Optional[float]) -> str:
         """Create a structured prompt for the LLM."""
         duration_text = f" (Duration: {meeting_duration:.1f} minutes)" if meeting_duration else ""
-        
-        prompt = f"""You are an AI assistant that creates structured meeting notes from transcripts. 
+
+        prompt = f"""You are an AI assistant that creates structured meeting notes from transcripts.
 
 Please analyze the following meeting transcript{duration_text} and create comprehensive meeting notes in JSON format.
+
+IMPORTANT: This transcript may contain MULTIPLE SPEAKERS. Pay close attention to:
+- Speaker introductions (e.g., "Hi, I'm John", "This is Sarah speaking")
+- Topic transitions that indicate a different person is speaking
+- Changes in perspective or subject matter
+- References to other people's names
+- Distinct conversation turns or dialogue patterns
 
 TRANSCRIPT:
 {transcript}
@@ -174,27 +181,30 @@ Please provide the output as a valid JSON object with the following structure:
         "platform": "Meeting platform if mentioned (Zoom/Teams/Meet/etc, or null)",
         "duration": {meeting_duration or "null"}
     }},
-    "participants": ["List of participant names mentioned in the transcript"],
-    "summary": "2-3 sentence summary of the meeting's main purpose and outcomes",
+    "participants": ["List ALL participant names mentioned or inferred from the transcript - if someone introduces themselves, add their name; if content suggests multiple speakers even without explicit names, use 'Speaker 1', 'Speaker 2', etc."],
+    "summary": "2-3 sentence summary of the meeting's main purpose and outcomes. If multiple speakers are detected, mention this (e.g., 'Multiple participants discussed...')",
     "agenda_items": [
         {{
             "title": "Agenda item title",
-            "description": "Description of what was discussed",
-            "time_discussed": "Approximate time or null"
+            "description": "Description of what was discussed (attribute to speaker if identifiable)",
+            "time_discussed": "Approximate time or null",
+            "speaker": "Name of person who led this topic (or null if unclear)"
         }}
     ],
     "discussion_points": [
         {{
             "topic": "Main topic discussed",
-            "key_points": ["List of key points made about this topic"],
-            "timestamp": "Approximate time or null"
+            "key_points": ["List of key points made about this topic - prefix each with speaker name if known (e.g., 'John: Mentioned X', 'Sarah: Suggested Y')"],
+            "timestamp": "Approximate time or null",
+            "speakers": ["List of speakers involved in this discussion point"]
         }}
     ],
     "decisions": [
         {{
             "decision": "Decision that was made",
             "rationale": "Why this decision was made (or null)",
-            "timestamp": "When decision was made (or null)"
+            "timestamp": "When decision was made (or null)",
+            "decided_by": "Who made or proposed this decision (or null)"
         }}
     ],
     "action_items": [
@@ -208,11 +218,13 @@ Please provide the output as a valid JSON object with the following structure:
 }}
 
 Guidelines:
+- CAREFULLY identify different speakers based on context, introductions, and topic shifts
 - Extract only information that is clearly present in the transcript
 - Use null for missing information rather than making assumptions
 - Focus on concrete decisions and action items
 - Group related discussion points together
-- Identify participants by names mentioned in the transcript
+- If you detect distinct sections of content (e.g., a presentation followed by Q&A), attribute them to different speakers
+- Look for phrases like "I think", "my opinion", "as I mentioned" that might indicate speaker transitions
 - Keep descriptions concise but informative
 - Ensure the JSON is valid and properly formatted
 
@@ -313,16 +325,18 @@ Respond with ONLY the JSON object, no additional text or formatting."""
                 agenda_items.append(AgendaItem(
                     title=item_data.get("title", ""),
                     description=item_data.get("description", ""),
-                    time_discussed=item_data.get("time_discussed")
+                    time_discussed=item_data.get("time_discussed"),
+                    speaker=item_data.get("speaker")
                 ))
-            
+
             # Parse discussion points
             discussion_points = []
             for point_data in data.get("discussion_points", []):
                 discussion_points.append(DiscussionPoint(
                     topic=point_data.get("topic", ""),
                     key_points=point_data.get("key_points", []),
-                    timestamp=point_data.get("timestamp")
+                    timestamp=point_data.get("timestamp"),
+                    speakers=point_data.get("speakers")
                 ))
             
             # Parse action items
@@ -341,7 +355,8 @@ Respond with ONLY the JSON object, no additional text or formatting."""
                 decisions.append(Decision(
                     decision=decision_data.get("decision", ""),
                     rationale=decision_data.get("rationale"),
-                    timestamp=decision_data.get("timestamp")
+                    timestamp=decision_data.get("timestamp"),
+                    decided_by=decision_data.get("decided_by")
                 ))
             
             # Create the complete MeetingNotes object

@@ -51,6 +51,7 @@ class AgendaItem(BaseModel):
     title: str
     description: str
     time_discussed: Optional[str] = None
+    speaker: Optional[str] = None
 
 
 class DiscussionPoint(BaseModel):
@@ -58,6 +59,7 @@ class DiscussionPoint(BaseModel):
     topic: str
     key_points: List[str]
     timestamp: Optional[str] = None
+    speakers: Optional[List[str]] = None
 
 
 class ActionItem(BaseModel):
@@ -73,6 +75,7 @@ class Decision(BaseModel):
     decision: str
     rationale: Optional[str] = None
     timestamp: Optional[str] = None
+    decided_by: Optional[str] = None
 
 
 class MeetingNotes(BaseModel):
@@ -115,28 +118,38 @@ class MeetingNotes(BaseModel):
         if self.agenda_items:
             lines.append("## Agenda Items")
             for item in self.agenda_items:
-                lines.append(f"### {item.title}")
+                title_with_speaker = f"{item.title}"
+                if item.speaker:
+                    title_with_speaker += f" (led by {item.speaker})"
+                lines.append(f"### {title_with_speaker}")
                 lines.append(item.description)
                 if item.time_discussed:
                     lines.append(f"*Discussed at: {item.time_discussed}*")
                 lines.append("")
-        
+
         # Discussion Points
         if self.discussion_points:
             lines.append("## Discussion Points")
             for point in self.discussion_points:
-                lines.append(f"### {point.topic}")
+                topic_with_speakers = f"{point.topic}"
+                if point.speakers:
+                    speakers_str = ", ".join(point.speakers)
+                    topic_with_speakers += f" ({speakers_str})"
+                lines.append(f"### {topic_with_speakers}")
                 for key_point in point.key_points:
                     lines.append(f"- {key_point}")
                 if point.timestamp:
                     lines.append(f"*Time: {point.timestamp}*")
                 lines.append("")
-        
+
         # Decisions
         if self.decisions:
             lines.append("## Decisions Made")
             for decision in self.decisions:
-                lines.append(f"- **{decision.decision}**")
+                decision_text = f"**{decision.decision}**"
+                if decision.decided_by:
+                    decision_text += f" (by {decision.decided_by})"
+                lines.append(f"- {decision_text}")
                 if decision.rationale:
                     lines.append(f"  - Rationale: {decision.rationale}")
                 if decision.timestamp:
