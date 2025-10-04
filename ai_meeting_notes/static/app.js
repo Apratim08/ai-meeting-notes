@@ -245,17 +245,22 @@ class MeetingNotesApp {
                 // If recording already in progress, suggest clearing session
                 if (error.detail && error.detail.includes('already in progress')) {
                     this.showToast('Recording already active. Click "Clear Session" to reset.', 'error');
+                    this.startBtn.disabled = false;
+                    this.startBtn.textContent = 'Start Recording';
                 } else {
                     throw new Error(error.detail || 'Failed to start recording');
                 }
             } else {
                 const result = await response.json();
                 this.showToast('Recording started', 'success');
+
+                // Immediately update button states for recording
+                this.startBtn.textContent = 'Start Recording';
+                this.stopBtn.disabled = false;
             }
 
         } catch (error) {
             this.showToast(error.message, 'error');
-        } finally {
             this.startBtn.disabled = false;
             this.startBtn.textContent = 'Start Recording';
         }
