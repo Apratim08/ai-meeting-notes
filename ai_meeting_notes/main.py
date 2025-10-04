@@ -248,14 +248,11 @@ async def health_check():
     except Exception:
         services["transcriber"] = False
     
-    # Check notes generator
+    # Check notes generator (for ChatGPT/Claude export)
     try:
         services["notes_generator"] = notes_generator is not None
-        if notes_generator:
-            services["ollama_available"] = notes_generator.check_ollama_available()
     except Exception:
         services["notes_generator"] = False
-        services["ollama_available"] = False
     
     # Check file manager
     try:

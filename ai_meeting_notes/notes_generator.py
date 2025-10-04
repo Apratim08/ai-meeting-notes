@@ -25,54 +25,16 @@ class OllamaError(Exception):
 
 class NotesGenerator:
     """
-    Generates structured meeting notes from transcripts using Ollama LLM.
-    
-    Handles retry logic, error recovery, and structured output parsing.
+    Generates export prompts for ChatGPT/Claude to create structured meeting notes.
+
+    No local LLM required - generates formatted prompts with transcripts for cloud LLMs.
     """
-    
+
     def __init__(self, config: Optional[AppConfig] = None):
         self.config = config or AppConfig()
-        self.ollama_url = self.config.llm.ollama_url
-        self.model_name = self.config.llm.model_name
-        self.temperature = self.config.llm.temperature
-        self.max_tokens = self.config.llm.max_tokens
-        self.max_retries = self.config.llm.max_retries
-        self.retry_delay = self.config.llm.retry_delay
-        self.timeout_seconds = self.config.llm.timeout_seconds
-
+        # Note: LLM config values are kept for backward compatibility but not actively used
         self._is_processing = False
         self._last_error: Optional[str] = None
-    
-    def check_ollama_available(self) -> bool:
-        """
-        Check if Ollama is running and the required model is available.
-        
-        Returns:
-            bool: True if Ollama is available and model exists
-        """
-        try:
-            # Check if Ollama is running
-            response = requests.get(f"{self.ollama_url}/api/tags", timeout=5)
-            if response.status_code != 200:
-                logger.error(f"Ollama not responding: {response.status_code}")
-                return False
-            
-            # Check if our model is available
-            models = response.json().get("models", [])
-            model_names = [model.get("name", "") for model in models]
-            
-            if self.model_name not in model_names:
-                logger.error(f"Model {self.model_name} not found. Available models: {model_names}")
-                return False
-            
-            return True
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to connect to Ollama: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"Unexpected error checking Ollama: {e}")
-            return False
     
     def is_processing(self) -> bool:
         """Check if notes generation is currently in progress."""

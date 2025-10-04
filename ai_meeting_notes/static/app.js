@@ -89,9 +89,6 @@ class MeetingNotesApp {
                 statusText = 'Audio setup required';
                 hasIssues = true;
                 this.showSetupInstructions();
-            } else if (!health.services.ollama_available) {
-                statusText = 'Ollama not available';
-                hasIssues = true;
             } else if (!health.services.disk_space_ok) {
                 statusText = 'Low disk space';
                 hasIssues = true;

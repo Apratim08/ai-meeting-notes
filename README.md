@@ -1,14 +1,15 @@
 # AI Meeting Notes
 
-An AI-powered meeting notes application that captures audio from system speakers, transcribes it to text, and uses an open-source LLM to generate structured meeting notes.
+An AI-powered meeting notes application that captures audio from system speakers and microphone, transcribes it to text, and exports to ChatGPT/Claude for structured meeting notes generation.
 
 ## Features
 
-- Manual audio capture from system speakers (via BlackHole on macOS)
-- Batch transcription using faster-whisper
-- AI-generated structured meeting notes using Ollama
+- Dual-stream audio capture from system speakers (via BlackHole) and microphone
+- Real-time audio mixing with configurable gain
+- High-quality transcription using faster-whisper
+- One-click export to ChatGPT/Claude for AI-generated notes
 - Simple web interface for monitoring and control
-- Privacy-focused: all processing happens locally
+- Privacy-focused: transcription happens locally, you control what goes to cloud LLMs
 
 ## Setup Requirements
 
@@ -27,16 +28,8 @@ An AI-powered meeting notes application that captures audio from system speakers
 ### Software Requirements
 
 1. **Install Python 3.9+**
-2. **Install Ollama**:
-   ```bash
-   # Install Ollama
-   curl -fsSL https://ollama.ai/install.sh | sh
-   
-   # Pull the required model
-   ollama pull llama3.1:8b
-   ```
 
-3. **Install Python dependencies**:
+2. **Install Python dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
@@ -51,11 +44,23 @@ An AI-powered meeting notes application that captures audio from system speakers
 3. Open http://localhost:8000 in your browser
 4. Click "Start Recording" when your meeting begins
 5. Click "Stop Recording" when the meeting ends
-6. Wait for transcription and notes generation to complete
+6. Wait for transcription to complete
+7. Click "📋 Export for ChatGPT/Claude" to copy the prompt + transcript
+8. Paste into ChatGPT or Claude to generate structured meeting notes
 
 ## Configuration
 
-Copy `.env.example` to `.env` and modify settings as needed.
+Copy `.env.example` to `.env` and modify settings as needed:
+
+```bash
+# Audio settings
+AUDIO_SAMPLE_RATE=16000
+MIC_GAIN=0.5  # Microphone gain (0.0-2.0)
+
+# Transcription settings
+WHISPER_MODEL=base  # tiny, base, small, medium, large
+TRANSCRIPTION_LANGUAGE=auto
+```
 
 ## Project Structure
 
@@ -63,9 +68,9 @@ Copy `.env.example` to `.env` and modify settings as needed.
 ai_meeting_notes/
 ├── __init__.py
 ├── config.py              # Configuration management
-├── audio_recorder.py      # Audio recording with BlackHole
+├── audio_recorder.py      # Dual-stream audio recording
 ├── transcription.py       # Batch transcription service
-├── notes_generator.py     # AI notes generation
+├── notes_generator.py     # ChatGPT/Claude prompt generation
 ├── models.py             # Data models
 ├── file_manager.py       # File management and cleanup
 ├── main.py              # FastAPI server
@@ -83,7 +88,15 @@ Run tests:
 pytest
 ```
 
-Start development server:
+Start development server with auto-reload:
 ```bash
 uvicorn ai_meeting_notes.main:app --reload
 ```
+
+## Why ChatGPT/Claude instead of local LLM?
+
+- **Higher quality**: ChatGPT and Claude produce better structured notes
+- **No GPU required**: No need for expensive local compute
+- **Faster processing**: Cloud LLMs are optimized and fast
+- **You control privacy**: Review the transcript before sending to cloud
+- **Cost effective**: Pay only for what you use
