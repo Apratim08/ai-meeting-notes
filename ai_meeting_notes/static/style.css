@@ -430,3 +430,10 @@ footer {
         padding: 16px;
     }
 }
+
+/* Button group for multiple action buttons */
+.button-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}

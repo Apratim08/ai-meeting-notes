@@ -295,40 +295,74 @@ def create_meeting_routes(
     async def get_transcript():
         """Get transcription result for current session."""
         current_session = get_current_session()
-        
+
         if not current_session:
             return TranscriptResponse(
                 transcript=None,
                 available=False,
                 message="No active session"
             )
-        
+
         if current_session.transcript:
             return TranscriptResponse(
                 transcript=current_session.transcript,
                 available=True,
                 message="Transcript available"
             )
-        
+
         if current_session.status == "transcribing":
             return TranscriptResponse(
                 transcript=None,
                 available=False,
                 message=f"Transcription in progress ({current_session.processing_progress:.0f}%)"
             )
-        
+
         if current_session.status == "error":
             return TranscriptResponse(
                 transcript=None,
                 available=False,
                 message=f"Transcription failed: {current_session.error_message}"
             )
-        
+
         return TranscriptResponse(
             transcript=None,
             available=False,
             message="Transcript not yet available"
         )
+
+    @router.get("/export-for-llm")
+    async def export_for_llm():
+        """Get formatted prompt + transcript for copy/paste to ChatGPT or Claude."""
+        current_session = get_current_session()
+        notes_generator = get_notes_generator()
+
+        if not current_session:
+            raise HTTPException(status_code=400, detail="No active session")
+
+        if not current_session.transcript:
+            raise HTTPException(status_code=400, detail="No transcript available")
+
+        if not notes_generator:
+            raise HTTPException(status_code=500, detail="Notes generator not initialized")
+
+        try:
+            # Get duration in minutes
+            meeting_duration = current_session.transcript.duration / 60.0
+
+            # Generate export prompt
+            export_text = notes_generator.get_export_prompt(
+                current_session.transcript.full_text,
+                meeting_duration
+            )
+
+            return {
+                "success": True,
+                "export_text": export_text,
+                "message": "Ready to copy to ChatGPT or Claude"
+            }
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to generate export: {str(e)}")
     
     @router.get("/notes", response_model=NotesResponse)
     async def get_notes():

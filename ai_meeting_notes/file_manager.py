@@ -1,11 +1,12 @@
 import os
 import shutil
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 
-from .models import MeetingSession
+from .models import MeetingSession, TranscriptResult
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +32,14 @@ class FileManager:
         
         # Create base directory if it doesn't exist
         self.base_dir.mkdir(exist_ok=True)
-        
+
         # Create subdirectories
         self.audio_dir = self.base_dir / "audio"
         self.temp_dir = self.base_dir / "temp"
+        self.transcripts_dir = self.base_dir / "transcripts"
         self.audio_dir.mkdir(exist_ok=True)
         self.temp_dir.mkdir(exist_ok=True)
+        self.transcripts_dir.mkdir(exist_ok=True)
     
     def get_audio_file_path(self, session_id: str) -> str:
         """Generate audio file path for a session."""
@@ -246,32 +249,81 @@ class FileManager:
         
         return stats
     
+    def save_transcript(self, transcript: TranscriptResult, session_id: str) -> str:
+        """
+        Save transcript to JSON file for debugging.
+
+        Args:
+            transcript: TranscriptResult to save
+            session_id: Session identifier
+
+        Returns:
+            Path to saved transcript file
+        """
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"transcript_{session_id}_{timestamp}.json"
+            filepath = self.transcripts_dir / filename
+
+            # Convert transcript to dict for JSON serialization
+            transcript_data = {
+                "full_text": transcript.full_text,
+                "duration": transcript.duration,
+                "language": transcript.language,
+                "processing_time": transcript.processing_time,
+                "model_name": transcript.model_name,
+                "created_at": transcript.created_at.isoformat(),
+                "audio_file_path": transcript.audio_file_path,
+                "average_confidence": transcript.average_confidence,
+                "segments": [
+                    {
+                        "text": seg.text,
+                        "start_time": seg.start_time,
+                        "end_time": seg.end_time,
+                        "confidence": seg.confidence,
+                        "speaker": seg.speaker,
+                        "is_uncertain": seg.is_uncertain
+                    }
+                    for seg in transcript.segments
+                ]
+            }
+
+            with open(filepath, 'w') as f:
+                json.dump(transcript_data, f, indent=2)
+
+            logger.info(f"Saved transcript to {filepath}")
+            return str(filepath)
+
+        except Exception as e:
+            logger.error(f"Error saving transcript: {e}")
+            raise
+
     def validate_file_path(self, filepath: str) -> Tuple[bool, str]:
         """
         Validate that a file path is safe and accessible.
-        
+
         Returns:
             Tuple of (is_valid, error_message)
         """
         try:
             path = Path(filepath)
-            
+
             # Check if path is within our managed directories
             if not (path.is_relative_to(self.base_dir)):
                 return False, "File path is outside managed directory"
-            
+
             # Check if parent directory exists
             if not path.parent.exists():
                 return False, "Parent directory does not exist"
-            
+
             # Check if we have write permissions
             if path.exists() and not os.access(path, os.W_OK):
                 return False, "No write permission for file"
-            
+
             if not path.exists() and not os.access(path.parent, os.W_OK):
                 return False, "No write permission for directory"
-            
+
             return True, ""
-            
+
         except Exception as e:
             return False, f"Path validation error: {e}"

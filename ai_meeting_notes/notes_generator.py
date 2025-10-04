@@ -38,7 +38,8 @@ class NotesGenerator:
         self.max_tokens = self.config.llm.max_tokens
         self.max_retries = self.config.llm.max_retries
         self.retry_delay = self.config.llm.retry_delay
-        
+        self.timeout_seconds = self.config.llm.timeout_seconds
+
         self._is_processing = False
         self._last_error: Optional[str] = None
     
@@ -225,13 +226,109 @@ Guidelines:
 - Group related discussion points together
 - If you detect distinct sections of content (e.g., a presentation followed by Q&A), attribute them to different speakers
 - Look for phrases like "I think", "my opinion", "as I mentioned" that might indicate speaker transitions
-- Keep descriptions concise but informative
-- Ensure the JSON is valid and properly formatted
+
+**CRITICAL: MAXIMIZE DETAIL PRESERVATION**
+- **NEVER summarize or paraphrase technical details** - copy exact terminology, file names, API endpoints, function names, variable names, values, and configurations mentioned
+- **Capture ALL implementation specifics**: specific file paths, folder structures, code organization decisions, naming conventions
+- **Include ALL issues/bugs discovered**: error messages, missing features, things that need fixing, concerns raised
+- **Preserve ALL technical decision reasoning**: why something was chosen, alternatives discussed, tradeoffs mentioned
+- **List ALL specific API endpoints/operations mentioned**: get, post, put, delete, specific URLs, parameters, response formats
+- **Record ALL numerical values and identifiers**: IDs, counts, sizes, thresholds mentioned
+- **Include ALL questions AND answers**: capture the entire Q&A flow, not just conclusions
+- **Document ALL tools/technologies/dependencies mentioned**: libraries, frameworks, external systems referenced
+- **Preserve ALL project management details**: task names, issue tracking, team coordination, deadlines, assignments
+- **DO NOT generalize or combine similar items** - keep them separate with full details for each
+- **When in doubt, include MORE detail rather than less** - verbosity is preferred over brevity for technical discussions
 
 Respond with ONLY the JSON object, no additional text or formatting."""
 
         return prompt
-    
+
+    def get_export_prompt(self, transcript: str, meeting_duration: Optional[float] = None) -> str:
+        """
+        Get the complete prompt with transcript for exporting to cloud LLMs (ChatGPT/Claude).
+
+        Args:
+            transcript: The meeting transcript text
+            meeting_duration: Duration of the meeting in minutes (optional)
+
+        Returns:
+            str: Complete formatted prompt ready to copy/paste into ChatGPT or Claude
+        """
+        duration_text = f" (Duration: {meeting_duration:.1f} minutes)" if meeting_duration else ""
+
+        export_prompt = f"""# AI Meeting Notes - Export for ChatGPT/Claude
+
+Copy this entire text and paste it into ChatGPT or Claude for high-quality meeting notes generation.
+
+---
+
+You are an AI assistant that creates detailed meeting notes from transcripts.
+
+Please analyze the following meeting transcript{duration_text} and create comprehensive meeting notes in a formatted text output.
+
+IMPORTANT: This transcript may contain MULTIPLE SPEAKERS. Pay close attention to:
+- Speaker introductions (e.g., "Hi, I'm John", "This is Sarah speaking")
+- Topic transitions that indicate a different person is speaking
+- Changes in perspective or subject matter
+- References to other people's names
+- Distinct conversation turns or dialogue patterns
+
+TRANSCRIPT:
+{transcript}
+
+**CRITICAL: MAXIMIZE DETAIL PRESERVATION**
+- **NEVER summarize or paraphrase technical details** - copy exact terminology, file names, API endpoints, function names, variable names, values, and configurations mentioned
+- **Capture ALL implementation specifics**: specific file paths, folder structures, code organization decisions, naming conventions
+- **Include ALL issues/bugs discovered**: error messages, missing features, things that need fixing, concerns raised
+- **Preserve ALL technical decision reasoning**: why something was chosen, alternatives discussed, tradeoffs mentioned
+- **List ALL specific API endpoints/operations mentioned**: get, post, put, delete, specific URLs, parameters, response formats
+- **Record ALL numerical values and identifiers**: IDs, counts, sizes, thresholds mentioned
+- **Include ALL questions AND answers**: capture the entire Q&A flow, not just conclusions
+- **Document ALL tools/technologies/dependencies mentioned**: libraries, frameworks, external systems referenced
+- **Preserve ALL project management details**: task names, issue tracking, team coordination, deadlines, assignments
+- **DO NOT generalize or combine similar items** - keep them separate with full details for each
+- **When in doubt, include MORE detail rather than less** - verbosity is preferred over brevity for technical discussions
+
+Please provide the output in the following markdown format:
+
+# Meeting Notes
+**Date:** [Meeting date or "Not specified"]
+**Duration:** {meeting_duration or "Not specified"} minutes
+
+## Participants
+- [List all participants]
+
+## Summary
+[2-3 sentence summary of the meeting's main purpose and outcomes]
+
+## Agenda Items
+### [Agenda item title] (led by [Speaker name])
+[Description of what was discussed]
+
+## Discussion Points
+### [Topic name] ([Speaker names involved])
+- [Speaker name]: [Detailed key point with ALL technical specifics]
+- [Speaker name]: [Another detailed point]
+
+## Decisions Made
+- **[Decision]** (by [Person])
+  - Rationale: [Why this decision was made]
+
+## Action Items
+- [Specific task with ALL details] ([Assignee name]) [PRIORITY]
+
+Guidelines:
+- Extract only information that is clearly present in the transcript
+- Use "Not specified" for missing information rather than making assumptions
+- Focus on concrete decisions and action items
+- Group related discussion points together
+- PRESERVE ALL TECHNICAL DETAILS - do not summarize or generalize
+
+Respond with the formatted meeting notes text, no additional commentary."""
+
+        return export_prompt
+
     def _call_ollama_api(self, prompt: str) -> str:
         """Call the Ollama API to generate notes with enhanced error handling."""
         payload = {
@@ -240,7 +337,7 @@ Respond with ONLY the JSON object, no additional text or formatting."""
             "stream": False,
             "options": {
                 "temperature": self.temperature,
-                "num_predict": self.max_tokens,
+                "num_predict": self.max_tokens, 
             }
         }
         
@@ -249,7 +346,7 @@ Respond with ONLY the JSON object, no additional text or formatting."""
             response = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json=payload,
-                timeout=300  # 5 minute timeout for generation
+                timeout=self.timeout_seconds
             )
             
             if response.status_code == 404:
