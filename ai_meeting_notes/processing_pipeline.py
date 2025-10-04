@@ -250,23 +250,24 @@ class ProcessingPipeline:
     
     async def _process_audio_pipeline(self, session: MeetingSession) -> None:
         """
-        Execute the complete processing pipeline: transcription → notes generation.
-        
+        Execute the complete processing pipeline: transcription only.
+
         Args:
             session: The session to process
         """
         self._is_processing = True
-        
+
         try:
             # Phase 1: Transcription
             await self._transcription_phase(session)
-            
-            # Phase 2: Notes Generation
-            await self._notes_generation_phase(session)
-            
+
+            # Phase 2: Notes Generation - DISABLED
+            # Users will use ChatGPT/Claude export instead
+            # await self._notes_generation_phase(session)
+
             # Phase 3: Completion and Cleanup
             await self._completion_phase(session)
-            
+
         except Exception as e:
             logger.error(f"Processing pipeline failed: {e}")
             self._preserve_intermediate_results(session, e)

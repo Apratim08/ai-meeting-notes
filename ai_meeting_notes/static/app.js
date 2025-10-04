@@ -408,15 +408,15 @@ class MeetingNotesApp {
     
     async exportForLLM() {
         try {
-            const response = await fetch('/api/export-for-llm');
+            const response = await fetch('/api/export-prompt');
             const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(data.detail || 'Failed to generate export');
             }
 
-            // Copy the export text to clipboard
-            await navigator.clipboard.writeText(data.export_text);
+            // Copy the export prompt to clipboard
+            await navigator.clipboard.writeText(data.prompt);
 
             // Visual feedback
             const originalText = this.exportLLMBtn.innerHTML;

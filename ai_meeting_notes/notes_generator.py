@@ -419,18 +419,37 @@ Respond with the formatted meeting notes text, no additional commentary."""
             # Parse agenda items
             agenda_items = []
             for item_data in data.get("agenda_items", []):
+                # Ensure title is a non-empty string
+                title = item_data.get("title")
+                if not title or not isinstance(title, str):
+                    title = "Discussion Topic"
+
+                # Ensure time_discussed is a string or None
+                time_discussed = item_data.get("time_discussed")
+                if time_discussed is not None and not isinstance(time_discussed, str):
+                    # If it's a float, format to 2 decimal places
+                    if isinstance(time_discussed, (int, float)):
+                        time_discussed = f"{float(time_discussed):.2f}"
+                    else:
+                        time_discussed = str(time_discussed)
+
                 agenda_items.append(AgendaItem(
-                    title=item_data.get("title", ""),
+                    title=title,
                     description=item_data.get("description", ""),
-                    time_discussed=item_data.get("time_discussed"),
+                    time_discussed=time_discussed,
                     speaker=item_data.get("speaker")
                 ))
 
             # Parse discussion points
             discussion_points = []
             for point_data in data.get("discussion_points", []):
+                # Ensure topic is a non-empty string - skip if empty
+                topic = point_data.get("topic")
+                if not topic or not isinstance(topic, str):
+                    continue  # Skip invalid discussion points
+
                 discussion_points.append(DiscussionPoint(
-                    topic=point_data.get("topic", ""),
+                    topic=topic,
                     key_points=point_data.get("key_points", []),
                     timestamp=point_data.get("timestamp"),
                     speakers=point_data.get("speakers")
@@ -439,18 +458,33 @@ Respond with the formatted meeting notes text, no additional commentary."""
             # Parse action items
             action_items = []
             for action_data in data.get("action_items", []):
+                # Ensure task is a non-empty string - skip if empty
+                task = action_data.get("task")
+                if not task or not isinstance(task, str):
+                    continue  # Skip invalid action items
+
+                # Ensure priority is a valid string
+                priority = action_data.get("priority", "medium")
+                if not priority or not isinstance(priority, str):
+                    priority = "medium"
+
                 action_items.append(ActionItem(
-                    task=action_data.get("task", ""),
+                    task=task,
                     assignee=action_data.get("assignee"),
                     due_date=action_data.get("due_date"),
-                    priority=action_data.get("priority", "medium")
+                    priority=priority
                 ))
             
             # Parse decisions
             decisions = []
             for decision_data in data.get("decisions", []):
+                # Ensure decision is a non-empty string - skip if empty
+                decision = decision_data.get("decision")
+                if not decision or not isinstance(decision, str):
+                    continue  # Skip invalid decisions
+
                 decisions.append(Decision(
-                    decision=decision_data.get("decision", ""),
+                    decision=decision,
                     rationale=decision_data.get("rationale"),
                     timestamp=decision_data.get("timestamp"),
                     decided_by=decision_data.get("decided_by")

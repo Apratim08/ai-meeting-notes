@@ -508,18 +508,18 @@ async def retry_transcription():
 async def retry_notes_generation():
     """Retry notes generation for the current session."""
     global processing_pipeline
-    
+
     if not processing_pipeline:
         raise HTTPException(status_code=500, detail="Processing pipeline not initialized")
-    
+
     current_session = processing_pipeline.get_current_session()
-    
+
     if not current_session:
         raise HTTPException(status_code=400, detail="No active session to retry")
-    
+
     if not current_session.transcript:
         raise HTTPException(status_code=400, detail="No transcript available for notes generation")
-    
+
     try:
         await processing_pipeline.retry_notes_generation(current_session)
         return {"success": True, "message": "Notes generation retry started"}
@@ -528,6 +528,46 @@ async def retry_notes_generation():
     except Exception as e:
         logger.error(f"Error retrying notes generation: {e}")
         raise HTTPException(status_code=500, detail="Failed to retry notes generation")
+
+
+@app.get("/api/export-prompt")
+async def get_export_prompt():
+    """Get the ChatGPT/Claude export prompt with transcript."""
+    global processing_pipeline, notes_generator
+
+    if not processing_pipeline:
+        raise HTTPException(status_code=500, detail="Processing pipeline not initialized")
+
+    if not notes_generator:
+        raise HTTPException(status_code=500, detail="Notes generator not initialized")
+
+    current_session = processing_pipeline.get_current_session()
+
+    if not current_session:
+        raise HTTPException(status_code=400, detail="No active session")
+
+    if not current_session.transcript:
+        raise HTTPException(status_code=400, detail="No transcript available yet")
+
+    try:
+        # Calculate meeting duration from transcript
+        meeting_duration = current_session.transcript.duration / 60.0  # Convert to minutes
+
+        # Get the export prompt
+        export_prompt = notes_generator.get_export_prompt(
+            current_session.transcript.full_text,
+            meeting_duration
+        )
+
+        return {
+            "success": True,
+            "prompt": export_prompt,
+            "transcript_duration": meeting_duration,
+            "transcript_language": current_session.transcript.language
+        }
+    except Exception as e:
+        logger.error(f"Error generating export prompt: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate export prompt: {str(e)}")
 
 
 # Setup and Validation Routes
