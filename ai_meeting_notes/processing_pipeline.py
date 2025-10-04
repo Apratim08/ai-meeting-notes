@@ -330,13 +330,14 @@ class ProcessingPipeline:
             # Store result
             session.transcript = transcript_result
 
-            # Save transcript to file for debugging
-            try:
-                session_id = str(id(session))
-                transcript_path = self.file_manager.save_transcript(transcript_result, session_id)
-                logger.info(f"Transcript saved to: {transcript_path}")
-            except Exception as e:
-                logger.warning(f"Failed to save transcript file: {e}")
+            # Note: Transcript files are no longer saved locally since we use ChatGPT/Claude export
+            # If you need local transcript files for debugging, uncomment the code below:
+            # try:
+            #     session_id = str(id(session))
+            #     transcript_path = self.file_manager.save_transcript(transcript_result, session_id)
+            #     logger.info(f"Transcript saved to: {transcript_path}")
+            # except Exception as e:
+            #     logger.warning(f"Failed to save transcript file: {e}")
 
             self._update_progress("transcribing", 100.0, "Transcription completed")
 
