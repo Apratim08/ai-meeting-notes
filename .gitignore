@@ -50,6 +50,7 @@ Thumbs.db
 
 # Application specific
 temp/
+temp/**/*
 *.wav
 *.mp3
 *.m4a

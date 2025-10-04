@@ -50,20 +50,22 @@ class MeetingNotesApp {
         // Copy buttons
         this.copyTranscriptBtn = document.getElementById('copy-transcript-btn');
         this.copyNotesBtn = document.getElementById('copy-notes-btn');
-        
+        this.exportLLMBtn = document.getElementById('export-llm-btn');
+
         // Toast container
         this.toastContainer = document.getElementById('toast-container');
     }
-    
+
     bindEvents() {
         this.startBtn.addEventListener('click', () => this.startRecording());
         this.stopBtn.addEventListener('click', () => this.stopRecording());
         this.clearBtn.addEventListener('click', () => this.clearSession());
         this.testSetupBtn.addEventListener('click', () => this.testAudioSetup());
         this.retryBtn.addEventListener('click', () => this.retryProcessing());
-        
+
         this.copyTranscriptBtn.addEventListener('click', () => this.copyToClipboard('transcript'));
         this.copyNotesBtn.addEventListener('click', () => this.copyToClipboard('notes'));
+        this.exportLLMBtn.addEventListener('click', () => this.exportForLLM());
         
         // Handle page visibility changes
         document.addEventListener('visibilitychange', () => {
@@ -404,10 +406,40 @@ class MeetingNotesApp {
         return html;
     }
     
+    async exportForLLM() {
+        try {
+            const response = await fetch('/api/export-for-llm');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Failed to generate export');
+            }
+
+            // Copy the export text to clipboard
+            await navigator.clipboard.writeText(data.export_text);
+
+            // Visual feedback
+            const originalText = this.exportLLMBtn.innerHTML;
+            this.exportLLMBtn.innerHTML = '✅ Copied!';
+            this.exportLLMBtn.style.backgroundColor = 'var(--success-color)';
+
+            setTimeout(() => {
+                this.exportLLMBtn.innerHTML = originalText;
+                this.exportLLMBtn.style.backgroundColor = '';
+            }, 3000);
+
+            this.showToast('Prompt + transcript copied! Paste into ChatGPT or Claude', 'success');
+
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showToast('Failed to export for LLM: ' + error.message, 'error');
+        }
+    }
+
     async copyToClipboard(type) {
         let text = '';
         let button = null;
-        
+
         if (type === 'transcript') {
             text = this.transcriptContent.textContent;
             button = this.copyTranscriptBtn;
@@ -415,27 +447,27 @@ class MeetingNotesApp {
             text = this.notesContent.textContent;
             button = this.copyNotesBtn;
         }
-        
+
         if (!text) {
             this.showToast('Nothing to copy', 'warning');
             return;
         }
-        
+
         try {
             await navigator.clipboard.writeText(text);
-            
+
             // Visual feedback
             const originalText = button.textContent;
             button.textContent = 'Copied!';
             button.style.backgroundColor = 'var(--success-color)';
-            
+
             setTimeout(() => {
                 button.textContent = originalText;
                 button.style.backgroundColor = '';
             }, 2000);
-            
+
             this.showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} copied to clipboard`, 'success');
-            
+
         } catch (error) {
             this.showToast('Failed to copy to clipboard', 'error');
         }

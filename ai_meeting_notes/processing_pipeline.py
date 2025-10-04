@@ -328,8 +328,17 @@ class ProcessingPipeline:
             
             # Store result
             session.transcript = transcript_result
+
+            # Save transcript to file for debugging
+            try:
+                session_id = str(id(session))
+                transcript_path = self.file_manager.save_transcript(transcript_result, session_id)
+                logger.info(f"Transcript saved to: {transcript_path}")
+            except Exception as e:
+                logger.warning(f"Failed to save transcript file: {e}")
+
             self._update_progress("transcribing", 100.0, "Transcription completed")
-            
+
             logger.info(
                 f"Transcription completed: {len(transcript_result.segments)} segments, "
                 f"avg confidence: {transcript_result.average_confidence:.2f}, "

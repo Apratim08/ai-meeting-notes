@@ -14,6 +14,9 @@ class AudioConfig(BaseModel):
     device_id: Optional[int] = Field(default=None, description="Audio device ID (auto-detect if None)")
     blackhole_device_name: str = Field(default="BlackHole 2ch", description="BlackHole device name to detect")
     max_recording_hours: float = Field(default=4.0, description="Maximum recording duration in hours")
+    enable_microphone: bool = Field(default=True, description="Enable microphone input for capturing your voice")
+    microphone_device_name: Optional[str] = Field(default=None, description="Specific microphone device name (auto-detect if None)")
+    mic_gain: float = Field(default=0.5, description="Microphone audio gain multiplier (0.0-2.0)")
 
 
 class TranscriptionConfig(BaseModel):
@@ -27,10 +30,10 @@ class TranscriptionConfig(BaseModel):
 
 class LLMConfig(BaseModel):
     """LLM processing configuration."""
-    model_name: str = Field(default="llama3.1:8b", description="Ollama model name")
-    temperature: float = Field(default=0.3, description="LLM temperature for generation")
-    max_tokens: int = Field(default=2000, description="Maximum tokens for notes generation")
-    timeout_seconds: int = Field(default=300, description="Timeout for LLM requests")
+    model_name: str = Field(default="qwen2.5:14b", description="Ollama model name")
+    temperature: float = Field(default=0.2, description="LLM temperature for generation")
+    max_tokens: int = Field(default=16000, description="Maximum tokens for notes generation")
+    timeout_seconds: int = Field(default=1200, description="Timeout for LLM requests")
     max_retries: int = Field(default=3, description="Number of retry attempts on failure")
     retry_delay: float = Field(default=2.0, description="Delay between retries in seconds")
     ollama_url: str = Field(default="http://localhost:11434", description="Ollama server URL")
@@ -48,7 +51,7 @@ class FileConfig(BaseModel):
     """File management configuration."""
     temp_dir: Path = Field(default=Path("temp"), description="Temporary files directory")
     max_file_size_mb: float = Field(default=500.0, description="Maximum audio file size in MB")
-    cleanup_after_success: bool = Field(default=True, description="Auto-cleanup files after successful processing")
+    cleanup_after_success: bool = Field(default=False, description="Auto-cleanup files after successful processing")
     retention_days: int = Field(default=7, description="Days to retain files before cleanup")
 
 
