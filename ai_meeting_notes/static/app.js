@@ -330,8 +330,8 @@ class MeetingNotesApp {
     }
     
     displayTranscript(transcript) {
-        if (transcript.text) {
-            this.transcriptContent.textContent = transcript.text;
+        if (transcript.full_text) {
+            this.transcriptContent.textContent = transcript.full_text;
             this.transcriptSection.style.display = 'block';
         }
     }
