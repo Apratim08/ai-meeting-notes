@@ -64,7 +64,9 @@ class MeetingNotesApp {
         this.retryBtn.addEventListener('click', () => this.retryProcessing());
 
         this.copyTranscriptBtn.addEventListener('click', () => this.copyToClipboard('transcript'));
-        this.copyNotesBtn.addEventListener('click', () => this.copyToClipboard('notes'));
+        if (this.copyNotesBtn) {
+            this.copyNotesBtn.addEventListener('click', () => this.copyToClipboard('notes'));
+        }
         this.exportLLMBtn.addEventListener('click', () => this.exportForLLM());
         
         // Handle page visibility changes
@@ -232,23 +234,29 @@ class MeetingNotesApp {
         try {
             this.startBtn.disabled = true;
             this.startBtn.textContent = 'Starting...';
-            
+
             const response = await fetch('/api/start-recording', {
                 method: 'POST'
             });
-            
+
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.detail || 'Failed to start recording');
+
+                // If recording already in progress, suggest clearing session
+                if (error.detail && error.detail.includes('already in progress')) {
+                    this.showToast('Recording already active. Click "Clear Session" to reset.', 'error');
+                } else {
+                    throw new Error(error.detail || 'Failed to start recording');
+                }
+            } else {
+                const result = await response.json();
+                this.showToast('Recording started', 'success');
             }
-            
-            const result = await response.json();
-            this.showToast('Recording started', 'success');
-            
+
         } catch (error) {
             this.showToast(error.message, 'error');
-            this.startBtn.disabled = false;
         } finally {
+            this.startBtn.disabled = false;
             this.startBtn.textContent = 'Start Recording';
         }
     }
@@ -293,9 +301,11 @@ class MeetingNotesApp {
             
             // Clear UI
             this.transcriptSection.style.display = 'none';
-            this.notesSection.style.display = 'none';
+            if (this.notesSection) {
+                this.notesSection.style.display = 'none';
+            }
             this.hideError();
-            
+
             this.showToast('Session cleared', 'success');
             
         } catch (error) {
@@ -337,6 +347,8 @@ class MeetingNotesApp {
     }
     
     displayNotes(notes) {
+        if (!this.notesSection) return; // Notes section is disabled
+
         const formattedNotes = this.formatNotes(notes);
         this.notesContent.innerHTML = formattedNotes;
         this.notesSection.style.display = 'block';
